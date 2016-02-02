@@ -1,30 +1,42 @@
-"use strict"
-const http = require('http');
-const url = require('url');
+"use strict";
 
-let pages = [
-  {id: '1', route: '', output: 'Woohoo!'},
-  {id: '2', route: 'about', output: 'A simple routing with Node example'},
-  {id: '3', route: 'another page', output: function() {
-    return 'Here\'s ' + this.route;
-  }}
-];
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
+
+const mimeTypes = {
+  '.js' : 'text/javascript',
+  '.html' : 'text/html',
+  '.css' : 'text/css'
+};
 
 const server = http.createServer();
+
 server.on('request', (req, res) => {
-  let id = url.parse(decodeURI(req.url), true).query.id;
-  if (id) {
-    pages.forEach((page) => {
-      if (page.id === id) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(typeof page.output === 'function' ? page.output() : page.output);
-      }
-    });
+  let lookup = path.basename(decodeURI(req.url)) || 'index.html';
+  var f = `chapter1/content/${lookup}`;
+  if (req.url === '/favicon.ico') {
+    console.log(`Not found: ${f}`);
+    res.end();
+    return;
   }
-  if (!res.finished) {
+  fs.access(f, fs.R_OK, (err) => {
+    if (!err) {
+      fs.readFile(f, (err, data) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Server Error!');
+          return;
+        }
+        let headers = {'Content-type': mimeTypes[path.extname(lookup)]};
+        res.writeHead(200, headers);
+        res.end(data);
+      });
+      return;
+    }
     res.writeHead(404);
-    res.end('Page Not Found!');
-  }
+    res.end();
+  });
 });
 
 server.listen(3002);
