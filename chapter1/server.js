@@ -10,6 +10,21 @@ const mimeTypes = {
   '.css' : 'text/css'
 };
 
+let cache = {};
+function cacheAndDeliver(f, cb) {
+  if (!cache[f]) {
+    fs.readFile(f, (err, data) => {
+      if (!err) {
+        cache[f] = {content: data};
+      }
+      cb(err, data);
+    });
+    return;
+  }
+  console.log(`loading ${f} from cache`);
+  cb(null, cache[f].content);
+}
+
 const server = http.createServer();
 
 server.on('request', (req, res) => {
@@ -22,13 +37,13 @@ server.on('request', (req, res) => {
   }
   fs.access(f, fs.R_OK, (err) => {
     if (!err) {
-      fs.readFile(f, (err, data) => {
+      cacheAndDeliver(f, (err, data) => {
         if (err) {
           res.writeHead(500);
           res.end('Server Error!');
           return;
         }
-        let headers = {'Content-type': mimeTypes[path.extname(lookup)]};
+        let headers = {'Content-type': mimeTypes[path.extname(f)]};
         res.writeHead(200, headers);
         res.end(data);
       });
