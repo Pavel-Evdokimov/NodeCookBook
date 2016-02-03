@@ -16,6 +16,8 @@ server.on('request', (req, res) => {
       if (!file.size) {
         return;
       }
+    }).on('field', (field, value) => {
+      res.write(`${field} : ${value}\n`);
     }).on('end', () => {
       res.end('All files received');
     });
