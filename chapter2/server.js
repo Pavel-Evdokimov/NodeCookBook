@@ -12,7 +12,12 @@ server.on('request', (req, res) => {
   if (req.method === "POST") {
     let incoming = new formidable.IncomingForm();
     incoming.uploadDir = 'chapter2/uploads';
-    incoming.on('file', (field, file) => {
+
+    incoming.on('fileBegin', (field, file) => {
+      if (file.name) {
+        file.path += "-" + file.name;
+      }
+    }).on('file', (field, file) => {
       if (!file.size) {
         return;
       }
