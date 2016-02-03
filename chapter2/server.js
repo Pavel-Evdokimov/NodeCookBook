@@ -1,9 +1,7 @@
 "use strict";
 const http = require('http');
-const querystring = require('querystring');
-const util = require('util');
+const formidable = require('formidable');
 const form = require('fs').readFileSync('chapter2/form.html');
-const maxData = 2 * 1024 * 1024; // 2mb
 const server = http.createServer();
 
 server.on('request', (req, res) => {
@@ -12,24 +10,15 @@ server.on('request', (req, res) => {
     res.end(form);
   }
   if (req.method === "POST") {
-    let postData = '';
-    req.on('data', (chunk) => {
-      postData += chunk;
-      if (postData.length > maxData) {
-        postData = '';
-        this.destroy();
-        res.writeHead(413); // Request Entity Too Large
-        res.end('Too large');
+    let incoming = new formidable.IncomingForm();
+    incoming.uploadDir = 'chapter2/uploads';
+    incoming.on('file', (field, file) => {
+      if (!file.size) {
+        return;
       }
+    }).on('end', () => {
+      res.end('All files received');
     });
-    req.on('end', () => {
-      if (!postData) {
-        res.end();
-        return; // Prevents empty post requests from chashing the server
-      }
-      let postDataObject = querystring.parse(postData);
-      console.log(`User Posted:\n${postData}`);
-      res.end(`You Posted:\n${util.inspect(postDataObject)}`);
-    });
+    incoming.parse(req);
   }
 }).listen(3002);
