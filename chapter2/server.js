@@ -30,6 +30,7 @@ server.on('request', (req, res) => {
     res.end(form);
   }
   if (req.method === "POST") {
+    console.log(req);
     let incoming = new formidable.IncomingForm();
     incoming.uploadDir = 'chapter2/uploads';
 
